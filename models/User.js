@@ -32,6 +32,15 @@ const UserSchema = new mongoose.Schema(
     preferences: {
       type: String,
     },
+    totalGames: {
+      type: Number,
+    },
+    wins: {
+      type: Number,
+    },
+    winrate: {
+      type: Number,
+    },
     rating: {
       type: Number,
     },

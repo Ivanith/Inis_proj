@@ -10,7 +10,7 @@ import { registerValidation, loginValidation } from "./validations.js";
 
 import { handleValidationErrors, checkAuth } from "./middleware/index.js";
 
-import { UserController } from "./controllers/index.js";
+import { GameController, UserController } from "./controllers/index.js";
 
 mongoose
   .connect(
@@ -62,7 +62,27 @@ app.post(
   UserController.register
 );
 
+app.post("/users/add/:id", checkAuth, UserController.addFriend);
+
+app.delete("/users/add/:id", checkAuth, UserController.removeFriend);
+
+app.get("/users/me", checkAuth, UserController.getMe);
+
+app.get("/users/:id", checkAuth, UserController.getOneUser);
+
+app.get("/users/search/:name", checkAuth, UserController.searchUserByName);
+
+app.get("/leaderboard", checkAuth, UserController.getUsers);
+
+app.patch("/users/me", checkAuth, UserController.updateMe);
+
+app.patch("/users/me/stat", checkAuth, UserController.updateStat);
+
+app.patch("/users/me/pass", checkAuth, UserController.updatePass);
+
 //Api for Games
+
+app.post("/game/create", checkAuth, GameController.create);
 
 //server check
 
