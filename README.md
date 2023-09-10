@@ -47,7 +47,8 @@ body:
 
 ### Add friend
 
-> [!IMPORTANT] **Bearer Token required**
+> [!IMPORTANT]
+> **Bearer Token required**
 
 ```
 route: http://localhost:4444/users/add/:user_id
