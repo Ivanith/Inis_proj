@@ -178,7 +178,9 @@ export const updatePass = async (req, res) => {
       }
 
       const { passwordHash, ...userData } = updatedUser._doc;
-      res.json(userData);
+      return res.status(200).json({
+        message: "Password changed successfully",
+      });
     } else {
       return res.status(403).json({
         message: "Wrong password",

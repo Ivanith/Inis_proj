@@ -27,7 +27,7 @@ const GameSchema = new mongoose.Schema(
       type: Boolean,
       required: true,
     },
-    result: {
+    winner: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",
       default: [],

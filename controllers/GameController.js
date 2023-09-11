@@ -12,8 +12,7 @@ export const create = async (req, res) => {
       players: req.body.players,
       gameSpeed: req.body.gameSpeed,
       ranked: req.body.ranked,
-      result: req.body.result,
-      user: req.userId,
+      winner: req.body.winner,
     });
 
     const post = await doc.save();
