@@ -14,7 +14,33 @@ import { GameController, UserController } from "./controllers/index.js";
 
 import http from "http";
 
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io"
+
+import handleSocketConnections from "./sockets/sockets.js"
+
+//default
+
+const app = express();
+
+const server = http.createServer(app);
+
+
+
+const io = new Server(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:4444",
+  },
+});
+
+app.use(express.json());
+
+handleSocketConnections(io);
+
+app.use(cors({
+  origin: 'http://localhost:4444'
+}));
+
 
 mongoose
   .connect(
@@ -23,7 +49,6 @@ mongoose
   .then(() => console.log("DB ok"))
   .catch((err) => console.log("DB error", err));
 
-const app = express();
 
 // multer part
 const storage = multer.diskStorage({
@@ -37,11 +62,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 app.use("/uploads", express.static("uploads"));
-
-//default
-app.use(express.json());
-
-app.use(cors());
 
 //multer route
 
