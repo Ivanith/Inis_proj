@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 export default function handleSocketConnections(io) {
   // Dictionary to store lobbies by lobby ID
   const lobbies = {};
-//Vania debil suka hahahah
 
   io.on("connection", (socket) => {
     console.log("Connected to socket.io");
