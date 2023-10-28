@@ -1,10 +1,35 @@
+import UserModel from "../models/User.js";
+import bcrypt from "bcrypt";
+
 export default function handleSocketConnections(io) {
   // Dictionary to store lobbies by lobby ID
   const lobbies = {};
 
+
   io.on("connection", (socket) => {
     console.log("Connected to socket.io");
-
+    //login part
+    socket.auth = false;
+    socket.on("authenticate", async (auth) => {
+      const { username, password } = auth;
+      const user = await UserModel.findOne({userName: username }).exec();
+      console.log(user);
+      console.log(password);
+      const isValidPass = await bcrypt.compare(
+        password,
+        user.passwordHash
+      ); 
+      if (user === null) {
+        socket.emit("error", { message: "No user found" });
+      } else if (isValidPass) {
+        socket.emit("error", { message: "Wrong password" });
+      } else {
+        socket.auth = true;
+        socket.user = user;
+        console.log('vse zaebis');
+      }
+    });
+    
     function updateLobbyList() {
       const lobbyList = Object.keys(lobbies).map((lobbyId) => ({
         id: lobbyId,
@@ -18,26 +43,50 @@ export default function handleSocketConnections(io) {
       io.emit("lobby list", lobbyList);
     }
 
-    socket.on("create lobby", ({ lobbyName, maxPlayers, gameSpeed, isRanked }) => {
-      const lobbyId = generateRandomLobbyId();
-      lobbies[lobbyId] = {
-        name: lobbyName,
-        maxPlayers: maxPlayers,
-        owner: socket.id,
-        players: [{ id: socket.id, isReady: false }],
-        messages: [],
-        gameSpeed: gameSpeed,
-        isRanked: isRanked === true, // Ensure isRanked is set to true or false
-      };
-      socket.join(lobbyId);
-      socket.emit("lobby created", lobbyId);
-      console.log(`Lobby created: ${lobbyId}`);
-      updateLobbyList();
+    socket.on("create lobby", async ({ lobbyName, maxPlayers, gameSpeed, isRanked }) => {
+      if (socket.auth) {
+        const lobbyId = generateRandomLobbyId();
+        lobbies[lobbyId] = {
+          name: lobbyName,
+          maxPlayers: maxPlayers,
+          owner: {
+            id: socket.id,
+            userName: socket.user.userName,
+            rating: socket.user.rating,
+            preferences: socket.user.preferences,
+            winrate: socket.user.winrate
+          },
+          players: [
+            {
+              id: socket.id,
+              userName: socket.user.userName,
+              rating: socket.user.rating,
+              preferences: socket.user.preferences,
+              winrate: socket.user.winrate
+            }
+          ],
+          messages: [],
+          gameSpeed: gameSpeed,
+          isRanked: isRanked === true, // Ensure isRanked is set to true or false
+        };
+        socket.join(lobbyId);
+        socket.emit("lobby created", lobbyId);
+        console.log(`Lobby created: ${lobbyId}`);
+        updateLobbyList();
+      }
     });
+    
 
     socket.on("join lobby", ({ lobbyId }) => {
       if (lobbies[lobbyId] && lobbies[lobbyId].players.length < lobbies[lobbyId].maxPlayers) {
-        lobbies[lobbyId].players.push({ id: socket.id, isReady: false });
+        const playerInfo = {
+          id: socket.id,
+          userName: socket.user ? socket.user.userName : null,
+          rating: socket.user ? socket.user.rating : null,
+          preferences: socket.user ? socket.user.preferences : null,
+          winrate: socket.user ? socket.user.winrate : null
+        };
+        lobbies[lobbyId].players.push(playerInfo);
         socket.join(lobbyId);
         socket.emit("lobby joined", lobbyId);
         console.log(`User joined Lobby: ${lobbyId}`);
@@ -113,4 +162,6 @@ export default function handleSocketConnections(io) {
   function generateRandomLobbyId() {
     return Math.random().toString(36).substr(2, 9);
   }
+ 
+
 }
