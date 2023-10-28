@@ -21,7 +21,7 @@ export default function handleSocketConnections(io) {
       ); 
       if (user === null) {
         socket.emit("error", { message: "No user found" });
-      } else if (isValidPass) {
+      } else if (!isValidPass) {
         socket.emit("error", { message: "Wrong password" });
       } else {
         socket.auth = true;
