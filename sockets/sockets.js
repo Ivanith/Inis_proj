@@ -25,7 +25,7 @@ export default function handleSocketConnections(io) {
       } else {
         socket.auth = true;
         socket.user = user;
-        console.log('vse zaebis');
+        console.log('you are logged in');
       }
     });
     
@@ -33,7 +33,8 @@ export default function handleSocketConnections(io) {
       const lobbyList = Object.keys(lobbies).map((lobbyId) => ({
         id: lobbyId,
         name: lobbies[lobbyId].name,
-        players: lobbies[lobbyId].players.length,
+        numberOfPlayers: lobbies[lobbyId].players.length,
+        players: lobbies[lobbyId].players,
         maxPlayers: lobbies[lobbyId].maxPlayers,
         owner: lobbies[lobbyId].owner,
         gameSpeed: lobbies[lobbyId].gameSpeed,
@@ -50,23 +51,26 @@ export default function handleSocketConnections(io) {
           maxPlayers: maxPlayers,
           owner: {
             id: socket.id,
+            userId: socket.user.id,
             userName: socket.user.userName,
             rating: socket.user.rating,
-            preferences: socket.user.preferences,
+            color: socket.user.preferedColor,
             winrate: socket.user.winrate
           },
           players: [
             {
               id: socket.id,
+              userId: socket.user.id,
               userName: socket.user.userName,
               rating: socket.user.rating,
-              preferences: socket.user.preferences,
-              winrate: socket.user.winrate
+              color: socket.user.preferedColor,
+              winrate: socket.user.winrate,
+              isReady: false
             }
           ],
           messages: [],
           gameSpeed: gameSpeed,
-          isRanked: isRanked === true, // Ensure isRanked is set to true or false
+          isRanked: isRanked,
         };
         socket.join(lobbyId);
         socket.emit("lobby created", lobbyId);
@@ -80,10 +84,12 @@ export default function handleSocketConnections(io) {
       if (lobbies[lobbyId] && lobbies[lobbyId].players.length < lobbies[lobbyId].maxPlayers) {
         const playerInfo = {
           id: socket.id,
-          userName: socket.user ? socket.user.userName : null,
+          userId: socket.user ? socket.user.id : null,
+          userName: socket.user ? socket.user.userName : socket.id,
           rating: socket.user ? socket.user.rating : null,
-          preferences: socket.user ? socket.user.preferences : null,
-          winrate: socket.user ? socket.user.winrate : null
+          color: socket.user ? socket.user.preferedColor : null,
+          winrate: socket.user ? socket.user.winrate : null,
+          isReady: false,
         };
         lobbies[lobbyId].players.push(playerInfo);
         socket.join(lobbyId);
@@ -97,10 +103,15 @@ export default function handleSocketConnections(io) {
 
     socket.on("send message", ({ lobbyId, message }) => {
       if (lobbies[lobbyId]) {
-        const playerName = socket.id;
+        const playerIndex = lobbies[lobbyId].players.findIndex((player) => player.id === socket.id);
+        if (playerIndex !== -1) {
+        const playerName = socket.user ? socket.user.userName : socket.id;
         const messageObject = { playerName, message };
         lobbies[lobbyId].messages.push(messageObject);
         io.to(lobbyId).emit("new message", messageObject);
+      } else {
+        socket.emit("error", { message: "You are not in this lobby" });
+      }
       }
     });
 
@@ -115,27 +126,30 @@ export default function handleSocketConnections(io) {
           lobbies[lobbyId].players[playerIndex].isReady = !lobbies[lobbyId].players[playerIndex].isReady;
           io.to(lobbyId).emit("player status", { playerId: socket.id, isReady: lobbies[lobbyId].players[playerIndex].isReady });
         }
-
+    
         const playersReady = lobbies[lobbyId].players.filter((player) => player.isReady);
         if (playersReady.length === lobbies[lobbyId].maxPlayers) {
           io.to(lobbyId).emit("lobby ready", lobbies[lobbyId]);
         }
       }
     });
+    
 
     socket.on("setRankedOption", ({ lobbyId }) => {
-      if (lobbies[lobbyId] && lobbies[lobbyId].owner === socket.id) {
+      if (lobbies[lobbyId] && lobbies[lobbyId].owner.id === socket.id) {
         lobbies[lobbyId].isRanked = !lobbies[lobbyId].isRanked; // Toggle isRanked status
         io.to(lobbyId).emit("isRankedOptionModified", { lobbyId, isRanked: lobbies[lobbyId].isRanked });
+        updateLobbyList();
       }
     });
 
     socket.on("setGameSpeed", ({ lobbyId, gameSpeed }) => {
-      if (lobbies[lobbyId] && lobbies[lobbyId].owner === socket.id) {
+      if (lobbies[lobbyId] && lobbies[lobbyId].owner.id === socket.id) {
         const gameSpeedOptions = ["slow", "medium", "fast"];
         if (gameSpeedOptions.includes(gameSpeed)) {
           lobbies[lobbyId].gameSpeed = gameSpeed;
           io.to(lobbyId).emit("gameSpeedSettingModified", { lobbyId, gameSpeed });
+          updateLobbyList();
         }
       }
     });
@@ -149,14 +163,33 @@ export default function handleSocketConnections(io) {
         }
       });
 
-      const lobbyId = Object.keys(lobbies).find((lobbyId) => lobbies[lobbyId].owner === socket.id);
+      const lobbyId = Object.keys(lobbies).find((lobbyId) => lobbies[lobbyId].owner.id === socket.id);
       if (lobbyId) {
         delete lobbies[lobbyId];
       }
 
       updateLobbyList();
     });
+
+    socket.on("disconnect", () => {
+      Object.keys(lobbies).forEach((lobbyId) => {
+        const playerIndex = lobbies[lobbyId].players.findIndex((player) => player.id === socket.id);
+        if (playerIndex !== -1) {
+          lobbies[lobbyId].players.splice(playerIndex, 1);
+          io.to(lobbyId).emit("player left", socket.id);
+        }
+      });
+
+      const lobbyId = Object.keys(lobbies).find((lobbyId) => lobbies[lobbyId].owner.id === socket.id);
+      if (lobbyId) {
+        delete lobbies[lobbyId];
+      }
+
+      updateLobbyList();
+    });
+
   });
+
 
   function generateRandomLobbyId() {
     return Math.random().toString(36).substr(2, 9);
