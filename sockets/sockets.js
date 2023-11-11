@@ -1,6 +1,6 @@
 import UserModel from "../models/User.js";
 import bcrypt from "bcrypt";
-
+import axios from 'axios';
 const gameSpeedOptions = ["slow", "medium", "fast"];
 
 export default function handleSocketConnections(io)
@@ -180,7 +180,6 @@ export default function handleSocketConnections(io)
       }
     });
 
-
     socket.on("setRankedOption", ({ }) =>
     {
       if (!socket.auth)
@@ -292,6 +291,30 @@ export default function handleSocketConnections(io)
       updateLobbyList();
     });
 
+    socket.on("start-game", async () =>
+    {
+      const body = {
+        players: [
+          {
+            "userId": "6dd6246a-f15b-43f8-bd67-5a38aa91184e",
+            "username": "username1"
+          },
+          {
+            "userId": "66182a83-8824-481a-8889-39b60ab361fd",
+            "username": "username2"
+          },
+          {
+            "userId": "363ed71a-056c-4fc6-9779-7dcc38d31e9c",
+            "username": "username3"
+          }
+        ],
+        numPlayers: 3
+      }
+      // const res = await axios.post("http://localhost:8000/qweasd123");
+      const res = await axios.post("http://localhost:8000/games/54a94296-eb0b-45dc-a6f6-544559cf6b8b", body);
+      console.log(res.data);
+    })
+
   });
 
 
@@ -299,6 +322,4 @@ export default function handleSocketConnections(io)
   {
     return Math.random().toString(36).substr(2, 9);
   }
-
-
 }
