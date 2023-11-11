@@ -132,7 +132,7 @@ export default function handleSocketConnections(io)
       {
         return;
       }
-      if (!lobbies[socket.lobbyId].players.includes((player) => player.id === socket.id))
+      if (!lobbies[socket.lobbyId].players.some((player) => player.id === socket.id))
       {
         socket.emit("error", { message: "You are not in this lobby" });
         return;
@@ -195,7 +195,7 @@ export default function handleSocketConnections(io)
       {
         return;
       }
-      if (!lobbies[socket.lobbyId].players.includes((player) => player.id === socket.id))
+      if (!lobbies[socket.lobbyId].players.some((player) => player.id === socket.id))
       {
         socket.emit("error", { message: "You are not in this lobby" });
         return;
@@ -221,7 +221,7 @@ export default function handleSocketConnections(io)
       {
         return;
       }
-      if (!lobbies[socket.lobbyId].players.includes((player) => player.id === socket.id))
+      if (!lobbies[socket.lobbyId].players.some((player) => player.id === socket.id))
       {
         socket.emit("error", { message: "You are not in this lobby" });
         return;
@@ -255,7 +255,7 @@ export default function handleSocketConnections(io)
       {
         return;
       }
-      if (!lobbies[socket.lobbyId].players.includes((player) => player.id === socket.id))
+      if (!lobbies[socket.lobbyId].players.some((player) => player.id === socket.id))
       {
         socket.emit("error", { message: "You are not in this lobby" });
         return;
