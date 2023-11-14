@@ -10,7 +10,7 @@ import { registerValidation, loginValidation } from "./validations.js";
 
 import { handleValidationErrors, checkAuth } from "./middleware/index.js";
 
-import { GameController, UserController } from "./controllers/index.js";
+import { ChatController, GameController, MessageController, UserController } from "./controllers/index.js";
 
 import http from "http";
 
@@ -107,6 +107,18 @@ app.patch("/users/me/pass", checkAuth, UserController.updatePass);
 //Api for Games
 
 app.post("/game/create", checkAuth, GameController.create);
+
+//Api for Chats 
+
+app.post("/chat", checkAuth, ChatController.accessChat);
+
+app.get("/chat", checkAuth, ChatController.fetchChats);
+
+//Api for Messages
+
+app.get("/message/:chatId",checkAuth, MessageController.allMessages);
+
+app.post("/message", checkAuth, MessageController.sendMessage);
 
 
 // server check
