@@ -4,7 +4,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import { registerValidation, loginValidation } from "./validations.js";
 import { handleValidationErrors, checkAuth } from "./middleware/index.js";
-import { GameController, UserController } from "./controllers/index.js";
+import { ChatController, GameController, MessageController, UserController } from "./controllers/index.js";
 import http from "http";
 import { Server, Socket } from "socket.io"
 import handleSocketConnections from "./sockets/sockets.js"
@@ -118,6 +118,18 @@ app.get('/', (req, res) =>
 {
   res.sendFile(path.join(__dirname, 'client/front_serivce/build', 'index.html'));
 });
+
+//Api for Chats 
+
+app.post("/chat", checkAuth, ChatController.accessChat);
+
+app.get("/chat", checkAuth, ChatController.fetchChats);
+
+//Api for Messages
+
+app.get("/message/:chatId",checkAuth, MessageController.allMessages);
+
+app.post("/message", checkAuth, MessageController.sendMessage);
 
 
 // server check
