@@ -69,7 +69,7 @@ export default function handleSocketConnections(io)
       socket.auth = true;
       socket.user = user;
     });
-    socket.on("create lobby", async ({ lobbyName, isPrivate, password }) =>
+    socket.on("create-lobby", async ({ lobbyName, isPrivate, password }) =>
     {
       if (!socket.auth)
       {
@@ -109,7 +109,7 @@ export default function handleSocketConnections(io)
       updateLobbyList(io, getLobbyList(lobbies));
     }
     );
-    socket.on("join lobby", ({ lobbyId, password }) =>
+    socket.on("join-lobby", ({ lobbyId, password }) =>
     {
       if (!lobbies[lobbyId])
       {
@@ -143,7 +143,7 @@ export default function handleSocketConnections(io)
       updateLobby(io, getLobbyById(lobbies, lobbyId), lobbyId, socket);
     });
 
-    socket.on("send message", ({ message }) =>
+    socket.on("send-message", ({ message }) =>
     {
       if (!socket.auth)
       {
@@ -170,7 +170,7 @@ export default function handleSocketConnections(io)
 
     });
 
-    socket.on("request lobby list", () =>
+    socket.on("request-lobby-list", () =>
     {
       updateLobbyList(io, getLobbyList(lobbies));
     });
@@ -205,7 +205,7 @@ export default function handleSocketConnections(io)
       }
     });
 
-    socket.on("setRankedOption", ({ }) =>
+    socket.on("set-RankedOption", ({ }) =>
     {
       if (!socket.auth)
       {
@@ -235,7 +235,7 @@ export default function handleSocketConnections(io)
       updateLobbyList(io, getLobbyList(lobbies));
     });
 
-    socket.on("setGameSpeed", ({ gameSpeed }) =>
+    socket.on("set-GameSpeed", ({ gameSpeed }) =>
     {
       if (!socket.auth)
       {
