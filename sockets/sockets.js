@@ -247,8 +247,8 @@ export default function handleSocketConnections(io)
         return;
       }
       const lobbyId = socket.lobbyId;
-      const isRandked = lobbies[lobbyId].isRanked;
-      lobbies[lobbyId].isRanked = !isRandked; // Toggle isRanked status
+      const isRanked = lobbies[lobbyId].isRanked;
+      lobbies[lobbyId].isRanked = !isRanked; // Toggle isRanked status
       io.to(lobbyId).emit("isRankedOptionModified", { lobbyId, isRanked: lobbies[lobbyId].isRanked });
       updateLobbyList(io, getLobbyList(lobbies));
     });
@@ -375,9 +375,15 @@ export default function handleSocketConnections(io)
         color: player.color || "Red",
       }));
 
+      const gameObj = {
+        numPlayers: lobbies[socket.lobbyId].numberOfPlayers,
+        gameSpeed: lobbies[socket.lobbId].gameSpeed,
+        ranked: lobbies[socket.lobbId].isRanked
+      }
+
       const body = {
         players: players,
-        numPlayers: lobbies[lobbyId].maxPlayers
+        gameStats: gameObj
       }
 
       console.log(body);
