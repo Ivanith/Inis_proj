@@ -4,7 +4,6 @@ import axios from 'axios';
 import jwt from "jsonwebtoken";
 
 const gameSpeedOptions = ["slow", "medium", "fast"];
-const statusOptions = ["open", 'closed'];
 
 function getLobbyById(lobbies, targetLobbyId) {
   const targetLobby = lobbies[targetLobbyId];
@@ -17,7 +16,7 @@ function getLobbyById(lobbies, targetLobbyId) {
       owner: targetLobby.owner,
       gameSpeed: targetLobby.gameSpeed,
       isRanked: targetLobby.isRanked,
-      status: targetLobby.status,
+      isPrivate: targetLobby.isPrivate,
     };
   
 }
@@ -39,7 +38,7 @@ function getLobbyList(lobbies)
       maxPlayers: lobby.maxPlayers,
       gameSpeed: lobby.gameSpeed,
       isRanked: lobby.isRanked,
-      status: lobby.status,
+      isPrivate: lobby.isPrivate,
     }));
 }
 function updateLobbyList(io, lobbyList)
@@ -77,7 +76,7 @@ export default function handleSocketConnections(io)
         // console.log('you are logged in');
       }
     });
-    socket.on("create lobby", async ({ lobbyName, status, password }) =>
+    socket.on("create lobby", async ({ lobbyName, isPrivate, password }) =>
     {
       if (!socket.auth)
       {
@@ -105,7 +104,7 @@ export default function handleSocketConnections(io)
         messages: [],
         gameSpeed: "medium",
         isRanked: false,
-        status: status,
+        isPrivate: isPrivate,
         password: password || null,
       };
       socket.join(lobbyId);
@@ -128,12 +127,8 @@ export default function handleSocketConnections(io)
         socket.emit("lobby full");
         return;
       }
-      if (lobbies[lobbyId].status === "closed" && lobbies[lobbyId].password !== password) {
+      if (lobbies[lobbyId].isPrivate === true && lobbies[lobbyId].password !== password) {
         socket.emit("error", { message: "incorrect password" });
-        return;
-      }
-      if (lobbies[lobbyId].status !== "open" && lobbies[lobbyId].status !== "closed") {
-        socket.emit("error", { message: "invalid lobby status" });
         return;
       }
       const playerInfo = {
