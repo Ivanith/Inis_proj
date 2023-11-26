@@ -65,21 +65,22 @@ export function handleLobbyEvents(io, socket)
     {
         if (!lobbies[lobbyId])
         {
+            socket.emit("lobby-joined", false);
             return;
         }
         if (lobbies[lobbyId].players.length >= lobbies[lobbyId].maxPlayer)
         {
-            socket.emit("lobby-full");
+            socket.emit("lobby-joined", false);
             return;
         }
         if (lobbies[lobbyId].isPrivate === true && lobbies[lobbyId].password !== password)
         {
-            socket.emit("error", { message: "incorrect password" });
+            socket.emit("lobby-joined", false);
             return;
         }
         if (lobbies[lobbyId].players.find((player) => player.id === socket.id))
         {
-            console.error("player already in the lobby");
+            socket.emit("lobby-joined", false);
             return;
         }
         const playerInfo = {
@@ -94,10 +95,9 @@ export function handleLobbyEvents(io, socket)
         lobbies[lobbyId].players.push(playerInfo);
         socket.join(lobbyId);
         socket.lobbyId = lobbyId;
-        socket.emit("lobby-joined", lobbyId);
+        socket.emit("lobby-joined", true);
         // console.log(`User joined Lobby: ${lobbyId}`);
         updateLobbyList(io, getLobbyList(lobbies));
-        updateLobby(io, lobbies, lobbyId, socket);
     });
 
     socket.on("send-message", ({ message }) =>
