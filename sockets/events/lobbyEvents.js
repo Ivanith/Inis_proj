@@ -295,7 +295,7 @@ export function handleLobbyEvents(io, socket)
 
         const body = {
             players: players,
-            gameStats: gameObj
+            settings: gameObj
         }
 
         console.log(body);
