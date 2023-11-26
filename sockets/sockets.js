@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { handleLobbyEvents } from "./events/lobbyEvents.js";
 import { lobbies } from "../utils/lobbies.js";
 import { updateLobbyList } from "../utils/socketFunctions.js";
+import { getLobbyList } from "../utils/socketFunctions.js";
 export default function handleSocketConnections(io)
 {
   io.on("connection", (socket) =>
