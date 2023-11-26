@@ -25,7 +25,7 @@ function getLobbyById(lobbies, targetLobbyId)
 
 function updateLobby(io, lobby, lobbyId, socket)
 {
-  io.to(socket.lobbyId).emit("lobby updated", lobby);
+  io.to(socket.lobbyId).emit("lobby-updated", lobby);
 }
 
 
@@ -45,7 +45,7 @@ function getLobbyList(lobbies)
 }
 function updateLobbyList(io, lobbyList)
 {
-  io.emit("lobby list", lobbyList);
+  io.emit("lobby-list", lobbyList);
 }
 
 export default function handleSocketConnections(io)
@@ -102,11 +102,12 @@ export default function handleSocketConnections(io)
       };
       socket.join(lobbyId);
       socket.lobbyId = lobbyId;
-      socket.emit("lobby created", lobbyId);
+      socket.emit("lobby-created", lobbyId);
 
       // console.log(`Lobby created: ${lobbyId}`);
 
       updateLobbyList(io, getLobbyList(lobbies));
+      updateLobby(io, getLobbyById(lobbies, lobbyId), lobbyId, socket);
     }
     );
     socket.on("join-lobby", ({ lobbyId, password }) =>
@@ -117,7 +118,7 @@ export default function handleSocketConnections(io)
       }
       if (lobbies[lobbyId].players.length >= lobbies[lobbyId].maxPlayer)
       {
-        socket.emit("lobby full");
+        socket.emit("lobby-full");
         return;
       }
       if (lobbies[lobbyId].isPrivate === true && lobbies[lobbyId].password !== password)
@@ -137,7 +138,7 @@ export default function handleSocketConnections(io)
       lobbies[lobbyId].players.push(playerInfo);
       socket.join(lobbyId);
       socket.lobbyId = lobbyId;
-      socket.emit("lobby joined", lobbyId);
+      socket.emit("lobby-joined", lobbyId);
       // console.log(`User joined Lobby: ${lobbyId}`);
       updateLobbyList(io, getLobbyList(lobbies));
       updateLobby(io, getLobbyById(lobbies, lobbyId), lobbyId, socket);
@@ -165,7 +166,7 @@ export default function handleSocketConnections(io)
       const playerName = socket.user ? socket.user.userName : socket.id;
       const messageObject = { playerName, message };
       lobbies[socket.lobbyId].messages.push(messageObject);
-      io.to(socket.lobbyId).emit("new message", messageObject);
+      io.to(socket.lobbyId).emit("new-message", messageObject);
 
 
     });
@@ -196,12 +197,12 @@ export default function handleSocketConnections(io)
       const lobbyId = socket.lobbyId;
       const player = lobbies[lobbyId].players.find((player) => player.id === socket.id);
       player.isReady = !player.isReady;
-      io.to(lobbyId).emit("player status", { playerId: socket.id, isReady: player.isReady });
+      io.to(lobbyId).emit("player-status", { playerId: socket.id, isReady: player.isReady });
 
       const everyPlayerIsReady = lobbies[lobbyId].players.every((player) => player.isReady);
       if (everyPlayerIsReady)
       {
-        io.to(lobbyId).emit("lobby ready", lobbies[lobbyId]);
+        io.to(lobbyId).emit("lobby-ready", lobbies[lobbyId]);
       }
     });
 
@@ -291,7 +292,7 @@ export default function handleSocketConnections(io)
       {
         delete lobbies[lobbyId];
       }
-      io.to(lobbyId).emit("player left", socket.id);
+      io.to(lobbyId).emit("player-left", socket.id);
 
       updateLobbyList(io, getLobbyList(lobbies));
     });
@@ -304,7 +305,7 @@ export default function handleSocketConnections(io)
         if (player)
         {
           lobbies[lobbyId].players = lobby.players.filter((player) => player.id !== socket.id);
-          io.to(lobbyId).emit("player left", socket.id);
+          io.to(lobbyId).emit("player-left", socket.id);
         }
       });
 
