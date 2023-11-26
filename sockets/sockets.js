@@ -1,7 +1,32 @@
 import UserModel from "../models/User.js";
 import bcrypt from "bcrypt";
 import axios from 'axios';
+import jwt from "jsonwebtoken";
+
 const gameSpeedOptions = ["slow", "medium", "fast"];
+const statusOptions = ["open", 'closed'];
+
+function getLobbyById(lobbies, targetLobbyId) {
+  const targetLobby = lobbies[targetLobbyId];
+    return {
+      id: targetLobbyId,
+      name: targetLobby.name,
+      numberOfPlayers: targetLobby.players.length,
+      players: targetLobby.players,
+      maxPlayers: targetLobby.maxPlayers,
+      owner: targetLobby.owner,
+      gameSpeed: targetLobby.gameSpeed,
+      isRanked: targetLobby.isRanked,
+      status: targetLobby.status,
+    };
+  
+}
+
+
+function updateLobby (io, lobby, lobbyId, socket){
+  io.to(socket.lobbyId).emit("lobby updated", lobby);
+}
+
 
 function getLobbyList(lobbies)
 {
@@ -11,11 +36,10 @@ function getLobbyList(lobbies)
       id: lobby_Id,
       name: lobby.name,
       numberOfPlayers: lobby.players.length,
-      players: lobby.players,
       maxPlayers: lobby.maxPlayers,
-      owner: lobby.owner,
       gameSpeed: lobby.gameSpeed,
       isRanked: lobby.isRanked,
+      status: lobby.status,
     }));
 }
 function updateLobbyList(io, lobbyList)
@@ -36,8 +60,6 @@ export default function handleSocketConnections(io)
     {
       const { username, password } = auth;
       const user = await UserModel.findOne({ userName: username }).exec();
-      // console.log(user);
-      // console.log(password);
       const isValidPass = await bcrypt.compare(
         password,
         user.passwordHash
@@ -55,7 +77,7 @@ export default function handleSocketConnections(io)
         // console.log('you are logged in');
       }
     });
-    socket.on("create lobby", async ({ lobbyName, maxPlayers, gameSpeed, isRanked }) =>
+    socket.on("create lobby", async ({ lobbyName, status, password }) =>
     {
       if (!socket.auth)
       {
@@ -64,7 +86,7 @@ export default function handleSocketConnections(io)
       const lobbyId = generateRandomLobbyId();
       lobbies[lobbyId] = {
         name: lobbyName,
-        maxPlayers: maxPlayers,
+        maxPlayers: 4,
         owner: {
           id: socket.id,
           userId: socket.user.id
@@ -81,8 +103,10 @@ export default function handleSocketConnections(io)
           }
         ],
         messages: [],
-        gameSpeed: gameSpeed,
-        isRanked: isRanked,
+        gameSpeed: "medium",
+        isRanked: false,
+        status: status,
+        password: password || null,
       };
       socket.join(lobbyId);
       socket.lobbyId = lobbyId;
@@ -93,7 +117,7 @@ export default function handleSocketConnections(io)
       updateLobbyList(io, getLobbyList(lobbies));
     }
     );
-    socket.on("join lobby", ({ lobbyId }) =>
+    socket.on("join lobby", ({ lobbyId, password }) =>
     {
       if (!lobbies[lobbyId])
       {
@@ -102,6 +126,14 @@ export default function handleSocketConnections(io)
       if (lobbies[lobbyId].players.length >= lobbies[lobbyId].maxPlayer)
       {
         socket.emit("lobby full");
+        return;
+      }
+      if (lobbies[lobbyId].status === "closed" && lobbies[lobbyId].password !== password) {
+        socket.emit("error", { message: "incorrect password" });
+        return;
+      }
+      if (lobbies[lobbyId].status !== "open" && lobbies[lobbyId].status !== "closed") {
+        socket.emit("error", { message: "invalid lobby status" });
         return;
       }
       const playerInfo = {
@@ -119,6 +151,7 @@ export default function handleSocketConnections(io)
       socket.emit("lobby joined", lobbyId);
       // console.log(`User joined Lobby: ${lobbyId}`);
       updateLobbyList(io, getLobbyList(lobbies));
+      updateLobby(io, getLobbyById(lobbies, lobbyId), lobbyId , socket);
     });
 
     socket.on("send message", ({ message }) =>
