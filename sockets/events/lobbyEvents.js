@@ -59,7 +59,7 @@ export function handleLobbyEvents(io, socket)
             socket.emit("error", { message: "You are not in this lobby" });
             return;
         }
-        updateLobby(io, lobbyId, socket);
+        updateLobby(io, lobbies, socket.lobbyId, socket);
     })
     socket.on("join-lobby", ({ lobbyId, password }) =>
     {
@@ -77,6 +77,11 @@ export function handleLobbyEvents(io, socket)
             socket.emit("error", { message: "incorrect password" });
             return;
         }
+        if (lobbies[lobbyId].players.find((player) => player.id === socket.id))
+        {
+            console.error("player already in the lobby");
+            return;
+        }
         const playerInfo = {
             id: socket.id,
             userId: socket.user ? socket.user.id : null,
@@ -92,7 +97,7 @@ export function handleLobbyEvents(io, socket)
         socket.emit("lobby-joined", lobbyId);
         // console.log(`User joined Lobby: ${lobbyId}`);
         updateLobbyList(io, getLobbyList(lobbies));
-        updateLobby(io, getLobbyById(lobbies, lobbyId), lobbyId, socket);
+        updateLobby(io, lobbies, lobbyId, socket);
     });
 
     socket.on("send-message", ({ message }) =>
