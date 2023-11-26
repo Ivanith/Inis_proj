@@ -123,8 +123,6 @@ export function handleLobbyEvents(io, socket)
         const messageObject = { playerName, message };
         lobbies[socket.lobbyId].messages.push(messageObject);
         io.to(socket.lobbyId).emit("new-message", messageObject);
-
-
     });
 
     socket.on("request-lobby-list", () =>
@@ -160,6 +158,7 @@ export function handleLobbyEvents(io, socket)
         {
             io.to(lobbyId).emit("lobby-ready", lobbies[lobbyId]);
         }
+        updateLobby(io, lobbies, lobbyId, socket);
     });
 
     socket.on("set-RankedOption", ({ }) =>
@@ -189,7 +188,7 @@ export function handleLobbyEvents(io, socket)
         const isRanked = lobbies[lobbyId].isRanked;
         lobbies[lobbyId].isRanked = !isRanked; // Toggle isRanked status
         io.to(lobbyId).emit("isRankedOptionModified", { lobbyId, isRanked: lobbies[lobbyId].isRanked });
-        updateLobbyList(io, getLobbyList(lobbies));
+        updateLobby(io, lobbies, lobbyId, socket);
     });
 
     socket.on("set-GameSpeed", ({ gameSpeed }) =>
@@ -218,7 +217,7 @@ export function handleLobbyEvents(io, socket)
         const lobbyId = socket.lobbyId;
         lobbies[lobbyId].gameSpeed = gameSpeed;
         io.to(lobbyId).emit("gameSpeedSettingModified", { lobbyId, gameSpeed });
-        updateLobbyList(io, getLobbyList(lobbies));
+        updateLobby(io, lobbies, lobbyId, socket);
     }
     );
 
@@ -241,7 +240,7 @@ export function handleLobbyEvents(io, socket)
             socket.emit("error", { message: "You are not in this lobby" });
             return;
         }
-
+        const lobbyId = socket.lobbyId;
         lobbies[lobbyId] = lobbies[lobbyId].players.filter((player) => player.id !== socket.id);
 
         if (lobbies[lobbyId].owner === socket.id)
@@ -250,7 +249,7 @@ export function handleLobbyEvents(io, socket)
         }
         io.to(lobbyId).emit("player-left", socket.id);
 
-        updateLobbyList(io, getLobbyList(lobbies));
+        updateLobby(io, lobbies, lobbyId, socket);
     });
     socket.on("start-game", async () =>
     {
