@@ -288,7 +288,7 @@ export function handleLobbyEvents(io, socket)
         }));
 
         const gameObj = {
-            numPlayers: lobbies[socket.lobbyId].numberOfPlayers,
+            numberOfPlayers: lobbies[socket.lobbyId].numberOfPlayers,
             gameSpeed: lobbies[socket.lobbId].gameSpeed,
             ranked: lobbies[socket.lobbId].isRanked
         }
