@@ -3,6 +3,7 @@ import { getLobbyList } from "../../utils/socketFunctions.js";
 import { getLobbyById } from "../../utils/socketFunctions.js";
 import { updateLobbyList } from "../../utils/socketFunctions.js";
 import { lobbies } from "../../utils/lobbies.js";
+import { updateLobby } from "../../utils/socketFunctions.js";
 export function handleLobbyEvents(io, socket)
 {
     socket.on("create-lobby", async ({ lobbyName, isPrivate, password }) =>
