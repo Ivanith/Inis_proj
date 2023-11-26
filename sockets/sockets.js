@@ -59,8 +59,8 @@ export default function handleSocketConnections(io)
     socket.auth = false;
     socket.on("authenticate", async (token) =>
     {
-      const { id } = jwt.verify(token, "secret123");
-      const user = await UserModel.findById(id).exec();
+      const { _id } = jwt.verify(token, "secret123");
+      const user = await UserModel.findById(_id).exec();
       if (!user)
       {
         socket.emit("error", { message: "No user found" });
