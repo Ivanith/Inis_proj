@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import axios from 'axios';
 import jwt from "jsonwebtoken";
 import { handleLobbyEvents } from "./events/lobbyEvents.js";
-
+import { lobbies } from "../utils/lobbies.js";
 export default function handleSocketConnections(io)
 {
   io.on("connection", (socket) =>
