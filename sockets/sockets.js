@@ -23,8 +23,9 @@ function getLobbyById(lobbies, targetLobbyId)
 }
 
 
-function updateLobby(io, lobby, lobbyId, socket)
+function updateLobby(io, lobbyId, socket)
 {
+  const lobby = getLobbyById(lobbies, lobbyId);
   io.to(socket.lobbyId).emit("lobby-updated", lobby);
 }
 
@@ -88,7 +89,7 @@ export default function handleSocketConnections(io)
             id: socket.id,
             userId: socket.user.id,
             userName: socket.user.userName,
-            mmr: socket.user.rating,
+            rating: socket.user.rating,
             color: socket.user.preferedColor,
             winrate: socket.user.winrate,
             isReady: false
@@ -107,9 +108,25 @@ export default function handleSocketConnections(io)
       // console.log(`Lobby created: ${lobbyId}`);
 
       updateLobbyList(io, getLobbyList(lobbies));
-      updateLobby(io, getLobbyById(lobbies, lobbyId), lobbyId, socket);
     }
     );
+    socket.on("lobby-info", () =>
+    {
+      if (!socket.lobbyId)
+      {
+        return;
+      }
+      if (!lobbies.hasOwnProperty(socket.lobbyId))
+      {
+        return;
+      }
+      if (!lobbies[socket.lobbyId].players.find((player) => player.id === socket.id))
+      {
+        socket.emit("error", { message: "You are not in this lobby" });
+        return;
+      }
+      updateLobby(io, lobbyId, socket);
+    })
     socket.on("join-lobby", ({ lobbyId, password }) =>
     {
       if (!lobbies[lobbyId])
@@ -354,7 +371,7 @@ export default function handleSocketConnections(io)
       const players = lobbies[lobbyId].players.map((player) => ({
         id: player.id,
         username: player.userName,
-        mmr: player.mmr || 1000,
+        mmr: player.rating || 1000,
         color: player.color || "Red",
       }));
 
