@@ -5,24 +5,26 @@ import jwt from "jsonwebtoken";
 
 const gameSpeedOptions = ["slow", "medium", "fast"];
 
-function getLobbyById(lobbies, targetLobbyId) {
+function getLobbyById(lobbies, targetLobbyId)
+{
   const targetLobby = lobbies[targetLobbyId];
-    return {
-      id: targetLobbyId,
-      name: targetLobby.name,
-      numberOfPlayers: targetLobby.players.length,
-      players: targetLobby.players,
-      maxPlayers: targetLobby.maxPlayers,
-      owner: targetLobby.owner,
-      gameSpeed: targetLobby.gameSpeed,
-      isRanked: targetLobby.isRanked,
-      isPrivate: targetLobby.isPrivate,
-    };
-  
+  return {
+    id: targetLobbyId,
+    name: targetLobby.name,
+    numberOfPlayers: targetLobby.players.length,
+    players: targetLobby.players,
+    maxPlayers: targetLobby.maxPlayers,
+    owner: targetLobby.owner,
+    gameSpeed: targetLobby.gameSpeed,
+    isRanked: targetLobby.isRanked,
+    isPrivate: targetLobby.isPrivate,
+  };
+
 }
 
 
-function updateLobby (io, lobby, lobbyId, socket){
+function updateLobby(io, lobby, lobbyId, socket)
+{
   io.to(socket.lobbyId).emit("lobby updated", lobby);
 }
 
@@ -55,26 +57,17 @@ export default function handleSocketConnections(io)
     // console.log("Connected to socket.io");
     //login part
     socket.auth = false;
-    socket.on("authenticate", async (auth) =>
+    socket.on("authenticate", async (token) =>
     {
-      const { username, password } = auth;
-      const user = await UserModel.findOne({ userName: username }).exec();
-      const isValidPass = await bcrypt.compare(
-        password,
-        user.passwordHash
-      );
-      if (user === null)
+      const { id } = jwt.verify(token, "secret123");
+      const user = await UserModel.findById(id).exec();
+      if (!user)
       {
         socket.emit("error", { message: "No user found" });
-      } else if (!isValidPass)
-      {
-        socket.emit("error", { message: "Wrong password" });
-      } else
-      {
-        socket.auth = true;
-        socket.user = user;
-        // console.log('you are logged in');
+        return;
       }
+      socket.auth = true;
+      socket.user = user;
     });
     socket.on("create lobby", async ({ lobbyName, isPrivate, password }) =>
     {
@@ -127,7 +120,8 @@ export default function handleSocketConnections(io)
         socket.emit("lobby full");
         return;
       }
-      if (lobbies[lobbyId].isPrivate === true && lobbies[lobbyId].password !== password) {
+      if (lobbies[lobbyId].isPrivate === true && lobbies[lobbyId].password !== password)
+      {
         socket.emit("error", { message: "incorrect password" });
         return;
       }
@@ -146,7 +140,7 @@ export default function handleSocketConnections(io)
       socket.emit("lobby joined", lobbyId);
       // console.log(`User joined Lobby: ${lobbyId}`);
       updateLobbyList(io, getLobbyList(lobbies));
-      updateLobby(io, getLobbyById(lobbies, lobbyId), lobbyId , socket);
+      updateLobby(io, getLobbyById(lobbies, lobbyId), lobbyId, socket);
     });
 
     socket.on("send message", ({ message }) =>
@@ -304,9 +298,11 @@ export default function handleSocketConnections(io)
 
     socket.on("disconnect", () =>
     {
-      Object.entries(lobbies).forEach(([lobbyId, lobby]) => {
+      Object.entries(lobbies).forEach(([lobbyId, lobby]) =>
+      {
         const player = lobby.players.find((player) => player.id === socket.id);
-        if (player) {
+        if (player)
+        {
           lobbies[lobbyId].players = lobby.players.filter((player) => player.id !== socket.id);
           io.to(lobbyId).emit("player left", socket.id);
         }
