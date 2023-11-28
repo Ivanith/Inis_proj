@@ -266,7 +266,7 @@ export const getMe = async (req: Request, res: Response) => {
       .limit(default_lim)
       .exec();
 
-    const { passwordHash, ...userData } = user;
+    const { passwordHash, ...userData } = user.toObject();
 
     res.json({ user: userData, games });
   } catch (err) {
@@ -309,7 +309,7 @@ export const getOneUser = async (req: Request, res: Response) => {
       .limit(default_lim)
       .exec();
 
-    const { passwordHash, ...userData } = user;
+    const { passwordHash, ...userData } = user.toObject();
     res.json({ user: userData, games });
   } catch (err) {
     console.log(err);

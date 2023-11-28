@@ -42,6 +42,7 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
             isRanked: false,
             isPrivate: isPrivate,
             password: password || null,
+            canStartGame: false
         };
         socket.join(lobbyId);
         socket.lobbyId = lobbyId;
@@ -157,74 +158,14 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         const lobbyId = socket.lobbyId;
         const player = lobbies[lobbyId].players.find((player) => player.socketId === socket.id)!;
         player.isReady = !player.isReady;
-        io.to(lobbyId).emit("player-status", { playerId: socket.id, isReady: player.isReady });
-
         const everyPlayerIsReady = lobbies[lobbyId].players.every((player) => player.isReady);
         if (everyPlayerIsReady) {
-            io.to(lobbyId).emit("lobby-ready", lobbies[lobbyId]);
+            lobbies[lobbyId].canStartGame = true;
+        } else {
+            lobbies[lobbyId].canStartGame = false;
         }
         updateLobby(io, lobbies, lobbyId, socket);
     });
-
-    // socket.on("set-RankedOption", ({ }) =>
-    // {
-    //     if (!socket.auth)
-    //     {
-    //         return;
-    //     }
-    //     if (!socket.lobbyId)
-    //     {
-    //         return;
-    //     }
-    //     if (!lobbies.hasOwnProperty(socket.lobbyId))
-    //     {
-    //         return;
-    //     }
-    //     if (!lobbies[socket.lobbyId].players.find((player) => player.id === socket.id))
-    //     {
-    //         socket.emit("error", { message: "You are not in this lobby" });
-    //         return;
-    //     }
-    //     if (lobbies[socket.lobbyId].owner.id !== socket.id)
-    //     {
-    //         return;
-    //     }
-    //     const lobbyId = socket.lobbyId;
-    //     const isRanked = lobbies[lobbyId].isRanked;
-    //     lobbies[lobbyId].isRanked = !isRanked; // Toggle isRanked status
-    //     io.to(lobbyId).emit("isRankedOptionModified", { lobbyId, isRanked: lobbies[lobbyId].isRanked });
-    //     updateLobby(io, lobbies, lobbyId, socket);
-    // });
-
-    // socket.on("set-GameSpeed", ({ gameSpeed }) =>
-    // {
-    //     if (!socket.auth)
-    //     {
-    //         return;
-    //     }
-    //     if (!lobbies[socket.lobbyId])
-    //     {
-    //         return;
-    //     }
-    //     if (!lobbies[socket.lobbyId].players.find((player) => player.id === socket.id))
-    //     {
-    //         socket.emit("error", { message: "You are not in this lobby" });
-    //         return;
-    //     }
-    //     if (lobbies[socket.lobbyId].owner.id !== socket.id)
-    //     {
-    //         return;
-    //     }
-    //     if (!gameSpeedOptions.includes(gameSpeed))
-    //     {
-    //         return;
-    //     }
-    //     const lobbyId = socket.lobbyId;
-    //     lobbies[lobbyId].gameSpeed = gameSpeed;
-    //     io.to(lobbyId).emit("gameSpeedSettingModified", { lobbyId, gameSpeed });
-    //     updateLobby(io, lobbies, lobbyId, socket);
-    // }
-    // );
 
     socket.on("lobbyDisconnect", () => {
         if (!socket.auth) {

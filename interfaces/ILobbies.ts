@@ -21,6 +21,7 @@ export interface ILobby {
     isRanked: boolean,
     isPrivate: boolean,
     password: string | null,
+    canStartGame: boolean
 }
 
 export interface ILobbySettingsInput {
