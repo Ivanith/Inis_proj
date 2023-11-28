@@ -1,5 +1,8 @@
-export function getLobbyById(lobbies, targetLobbyId)
-{
+import { Socket, Server } from "socket.io";
+import { ILobbies, ILobby, ILobbyDTO } from "../interfaces/ILobbies";
+import { ICustomSocket } from "../sockets/events/lobbyEvents";
+
+export function getLobbyById(lobbies: ILobbies, targetLobbyId: string) {
     const targetLobby = lobbies[targetLobbyId];
     return {
         id: targetLobbyId,
@@ -13,13 +16,11 @@ export function getLobbyById(lobbies, targetLobbyId)
         isPrivate: targetLobby.isPrivate,
     };
 }
-export function updateLobby(io, lobbies, lobbyId, socket)
-{
+export function updateLobby(io: Server, lobbies: ILobbies, lobbyId: string, socket: ICustomSocket) {
     const lobby = getLobbyById(lobbies, lobbyId);
-    io.to(socket.lobbyId).emit("lobby-updated", lobby);
+    io.to(socket.lobbyId!).emit("lobby-updated", lobby);
 }
-export function getLobbyList(lobbies)
-{
+export function getLobbyList(lobbies: ILobbies): ILobbyDTO[] {
     return Object.entries(lobbies).map(([lobby_Id, lobby]) =>
     (
         {
@@ -32,11 +33,9 @@ export function getLobbyList(lobbies)
             isPrivate: lobby.isPrivate,
         }));
 }
-export function generateRandomLobbyId()
-{
+export function generateRandomLobbyId() {
     return Math.random().toString(36).substr(2, 9);
 }
-export function updateLobbyList(io, lobbyList)
-{
+export function updateLobbyList(io: Server, lobbyList: ILobbyDTO[]) {
     io.emit("lobby-list", lobbyList);
 }

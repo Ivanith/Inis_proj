@@ -1,9 +1,9 @@
-import { json, query } from "express";
+import { Response, Request, json, query } from "express";
 import mongoose from "mongoose";
-import GameModel from "../models/Game.js";
-import UserModel from "../models/User.js";
+import GameModel from "../models/Game";
+import UserModel from "../models/User";
 
-export const create = async (req, res) => {
+export const create = async (req: Request, res: Response) => {
   try {
     const doc = new GameModel({
       duration: req.body.duration,
