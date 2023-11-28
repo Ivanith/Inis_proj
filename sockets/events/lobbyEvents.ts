@@ -21,7 +21,7 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         const lobbyId = generateRandomLobbyId();
         lobbies[lobbyId] = {
             name: lobbyName,
-            maxPlayers: 4,
+            maxPlayers: 3,
             owner: {
                 SocketId: socket.id,
                 userId: socket.user.id
@@ -193,28 +193,34 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
     });
     socket.on("start-game", async () => {
         if (!socket.auth) {
+            console.log("auth error");
             return;
         }
         if (!socket.lobbyId) {
+            console.log("lobby id error");
             return;
         }
         if (!lobbies.hasOwnProperty(socket.lobbyId)) {
+            console.log("no lobby id");
             return;
         }
         if (!lobbies[socket.lobbyId].players.find((player) => player.socketId === socket.id)) {
-            socket.emit("error", { message: "You are not in this lobby" });
+            console.log("player is not in lobby");
             return;
         }
         if (lobbies[socket.lobbyId].owner.SocketId !== socket.id) {
+            console.log("player is not owner");
             return;
         }
         if (lobbies[socket.lobbyId].maxPlayers !== lobbies[socket.lobbyId].players.length) {
+            console.log("not enough players");
             return;
         }
         if (!lobbies[socket.lobbyId].players.every((player) => player.isReady)) {
+            console.log("not all players are ready");
             return;
         }
-
+        console.log("reached validation")
         const lobbyId = socket.lobbyId;
 
         const players = lobbies[lobbyId].players.map((player) => ({
@@ -236,8 +242,13 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         }
 
         console.log(body);
-        const res = await axios.post<{ gameId: string }>("http://localhost:8000/games", body);
-        console.log(res.data);
-        socket.to(socket.lobbyId!).emit("start-game", res.data);
+        try {
+            const res = await axios.post<{ gameId: string }>("http://localhost:8000/games", body);
+            console.log(res.data);
+            io.to(socket.lobbyId!).emit("start-game", res.data);
+            delete lobbies[lobbyId];
+        } catch (err: any) {
+            console.log(err)
+        }
     })
 }

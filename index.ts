@@ -108,8 +108,8 @@ app.patch("/users/me/pass", checkAuth, UserController.updatePass);
 
 app.post("/game/create", checkAuth, GameController.create);
 
-app.use("/game", express.static(path.resolve(__dirname, 'client/front_game/build')));
-app.get('/game', (req, res) => {
+app.use("/game/:gameId", express.static(path.resolve(__dirname, 'client/front_game/build')));
+app.get('/game/:gameId', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/front_game/build', 'index.html'));
 });
 
