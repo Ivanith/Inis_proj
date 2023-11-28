@@ -236,7 +236,8 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         }
 
         console.log(body);
-        const res = await axios.post("http://localhost:8000/games", body);
+        const res = await axios.post<{ gameId: string }>("http://localhost:8000/games", body);
         console.log(res.data);
+        socket.to(socket.lobbyId!).emit("start-game", res.data);
     })
 }
