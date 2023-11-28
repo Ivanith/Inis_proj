@@ -7,6 +7,7 @@ import { updateLobby } from "../../utils/socketFunctions";
 import { Server, Socket } from "socket.io";
 import { extname } from "path";
 import axios from "axios";
+import { ILobby, ILobbySettingsInput } from "../../interfaces/ILobbies";
 export interface ICustomSocket extends Socket {
     auth?: boolean,
     user?: any,
@@ -27,7 +28,7 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
             },
             players: [
                 {
-                    SocketId: socket.id,
+                    socketId: socket.id,
                     userId: socket.user.id,
                     userName: socket.user.userName,
                     rating: socket.user.rating,
@@ -56,7 +57,7 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         if (!lobbies.hasOwnProperty(socket.lobbyId)) {
             return;
         }
-        if (!lobbies[socket.lobbyId].players.find((player) => player.SocketId === socket.id)) {
+        if (!lobbies[socket.lobbyId].players.find((player) => player.socketId === socket.id)) {
             socket.emit("error", { message: "You are not in this lobby" });
             return;
         }
@@ -75,12 +76,12 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
             socket.emit("lobby-joined", false);
             return;
         }
-        if (lobbies[lobbyId].players.find((player) => player.SocketId === socket.id)) {
+        if (lobbies[lobbyId].players.find((player) => player.socketId === socket.id)) {
             socket.emit("lobby-joined", false);
             return;
         }
         const playerInfo = {
-            SocketId: socket.id,
+            socketId: socket.id,
             userId: socket.user.id,
             userName: socket.user.userName,
             rating: socket.user.rating,
@@ -105,7 +106,7 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         if (!lobbies.hasOwnProperty(socket.lobbyId)) {
             return;
         }
-        if (!lobbies[socket.lobbyId].players.find((player) => player.SocketId === socket.id)) {
+        if (!lobbies[socket.lobbyId].players.find((player) => player.socketId === socket.id)) {
             socket.emit("error", { message: "You are not in this lobby" });
             return;
         }
@@ -119,36 +120,51 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         updateLobbyList(io, getLobbyList(lobbies));
     });
 
-    // socket.on("isReady", ({ }) =>
-    // {
-    //     if (!socket.auth)
-    //     {
-    //         return;
-    //     }
-    //     if (!socket.lobbyId)
-    //     {
-    //         return;
-    //     }
-    //     if (!lobbies.hasOwnProperty(socket.lobbyId))
-    //     {
-    //         return;
-    //     }
-    //     if (!lobbies[socket.lobbyId].players.find((player) => player.id === socket.id))
-    //     {
-    //         return;
-    //     }
-    //     const lobbyId = socket.lobbyId;
-    //     const player = lobbies[lobbyId].players.find((player) => player.id === socket.id);
-    //     player.isReady = !player.isReady;
-    //     io.to(lobbyId).emit("player-status", { playerId: socket.id, isReady: player.isReady });
+    socket.on("update-lobby-settings", (lobbySetting: ILobbySettingsInput) => {
+        if (!socket.auth) {
+            return;
+        }
+        if (!socket.lobbyId) {
+            return;
+        }
+        if (!lobbies.hasOwnProperty(socket.lobbyId)) {
+            return;
+        }
+        if (!lobbies[socket.lobbyId].players.find((player) => player.socketId === socket.id)) {
+            return;
+        }
+        if (lobbies[socket.lobbyId].owner.SocketId !== socket.id) {
+            return;
+        }
+        lobbies[socket.lobbyId].isRanked = lobbySetting.isRanked;
+        lobbies[socket.lobbyId].gameSpeed = lobbySetting.gameSpeed;
+        lobbies[socket.lobbyId].maxPlayers = lobbySetting.maxPlayers;
+    })
 
-    //     const everyPlayerIsReady = lobbies[lobbyId].players.every((player) => player.isReady);
-    //     if (everyPlayerIsReady)
-    //     {
-    //         io.to(lobbyId).emit("lobby-ready", lobbies[lobbyId]);
-    //     }
-    //     updateLobby(io, lobbies, lobbyId, socket);
-    // });
+    socket.on("is-ready", () => {
+        if (!socket.auth) {
+            return;
+        }
+        if (!socket.lobbyId) {
+            return;
+        }
+        if (!lobbies.hasOwnProperty(socket.lobbyId)) {
+            return;
+        }
+        if (!lobbies[socket.lobbyId].players.find((player) => player.socketId === socket.id)) {
+            return;
+        }
+        const lobbyId = socket.lobbyId;
+        const player = lobbies[lobbyId].players.find((player) => player.socketId === socket.id)!;
+        player.isReady = !player.isReady;
+        io.to(lobbyId).emit("player-status", { playerId: socket.id, isReady: player.isReady });
+
+        const everyPlayerIsReady = lobbies[lobbyId].players.every((player) => player.isReady);
+        if (everyPlayerIsReady) {
+            io.to(lobbyId).emit("lobby-ready", lobbies[lobbyId]);
+        }
+        updateLobby(io, lobbies, lobbyId, socket);
+    });
 
     // socket.on("set-RankedOption", ({ }) =>
     // {
@@ -220,12 +236,12 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         if (!lobbies.hasOwnProperty(socket.lobbyId)) {
             return;
         }
-        if (!lobbies[socket.lobbyId].players.find((player) => player.SocketId === socket.id)) {
+        if (!lobbies[socket.lobbyId].players.find((player) => player.socketId === socket.id)) {
             socket.emit("error", { message: "You are not in this lobby" });
             return;
         }
         const lobbyId = socket.lobbyId;
-        lobbies[lobbyId].players = lobbies[lobbyId].players.filter((player) => player.SocketId !== socket.id);
+        lobbies[lobbyId].players = lobbies[lobbyId].players.filter((player) => player.socketId !== socket.id);
 
         if (lobbies[lobbyId].owner.SocketId === socket.id) {
             delete lobbies[lobbyId];
@@ -244,7 +260,7 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         if (!lobbies.hasOwnProperty(socket.lobbyId)) {
             return;
         }
-        if (!lobbies[socket.lobbyId].players.find((player) => player.SocketId === socket.id)) {
+        if (!lobbies[socket.lobbyId].players.find((player) => player.socketId === socket.id)) {
             socket.emit("error", { message: "You are not in this lobby" });
             return;
         }

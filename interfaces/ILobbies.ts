@@ -7,7 +7,7 @@ export interface ILobby {
     },
     players:
     {
-        SocketId: string,
+        socketId: string,
         userId: string,
         userName: string,
         rating: number,
@@ -23,6 +23,11 @@ export interface ILobby {
     password: string | null,
 }
 
+export interface ILobbySettingsInput {
+    maxPlayers: number,
+    isRanked: boolean,
+    gameSpeed: "medium" | "fast" | "slow"
+}
 export interface ILobbies {
     [lobbyId: string]: ILobby;
 }

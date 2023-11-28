@@ -28,9 +28,9 @@ export default function handleSocketConnections(io: Server) {
 
     socket.on("disconnect", () => {
       Object.entries(lobbies).forEach(([lobbyId, lobby]) => {
-        const player = lobby.players.find((player) => player.SocketId === socket.id);
+        const player = lobby.players.find((player) => player.socketId === socket.id);
         if (player) {
-          lobbies[lobbyId].players = lobby.players.filter((player) => player.SocketId !== socket.id);
+          lobbies[lobbyId].players = lobby.players.filter((player) => player.socketId !== socket.id);
           io.to(lobbyId).emit("player-left", socket.id);
         }
       });

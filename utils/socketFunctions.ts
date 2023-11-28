@@ -2,19 +2,9 @@ import { Socket, Server } from "socket.io";
 import { ILobbies, ILobby, ILobbyDTO } from "../interfaces/ILobbies";
 import { ICustomSocket } from "../sockets/events/lobbyEvents";
 
-export function getLobbyById(lobbies: ILobbies, targetLobbyId: string) {
+export function getLobbyById(lobbies: ILobbies, targetLobbyId: string): ILobby {
     const targetLobby = lobbies[targetLobbyId];
-    return {
-        id: targetLobbyId,
-        name: targetLobby.name,
-        numberOfPlayers: targetLobby.players.length,
-        players: targetLobby.players,
-        maxPlayers: targetLobby.maxPlayers,
-        owner: targetLobby.owner,
-        gameSpeed: targetLobby.gameSpeed,
-        isRanked: targetLobby.isRanked,
-        isPrivate: targetLobby.isPrivate,
-    };
+    return targetLobby;
 }
 export function updateLobby(io: Server, lobbies: ILobbies, lobbyId: string, socket: ICustomSocket) {
     const lobby = getLobbyById(lobbies, lobbyId);
