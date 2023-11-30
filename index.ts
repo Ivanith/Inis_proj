@@ -106,7 +106,7 @@ app.patch("/users/me/pass", checkAuth, UserController.updatePass);
 
 //Api for Games
 
-app.post("/game/create", checkAuth, GameController.create);
+app.post("/game/create", GameController.create);
 
 app.use("/game/:gameId", express.static(path.resolve(__dirname, 'client/front_game/build')));
 app.get('/game/:gameId', (req, res) => {
