@@ -34,15 +34,19 @@ const UserSchema = new mongoose.Schema(
     },
     totalGames: {
       type: Number,
+      default: 0,
     },
     wins: {
       type: Number,
+      default: 0,
     },
     winrate: {
       type: Number,
+      default: 0,
     },
     rating: {
       type: Number,
+      default: 100,
     },
   },
   {

@@ -8,6 +8,7 @@ import { ChatController, GameController, MessageController, UserController } fro
 import http from "http";
 import { Server, Socket } from "socket.io"
 import handleSocketConnections from "./sockets/sockets"
+import userRoutes from "./routes/userRoutes"
 //default
 import path from "path"
 import url from 'url';
@@ -71,38 +72,7 @@ app.post("/upload", checkAuth, upload.single("image"), (req, res) => {
   });
 });
 
-//Api for Users
-app.post(
-  "/login",
-  loginValidation,
-  handleValidationErrors,
-  UserController.login
-);
-
-app.post(
-  "/register",
-  registerValidation,
-  handleValidationErrors,
-  UserController.register
-);
-
-app.post("/users/add/:id", checkAuth, UserController.addFriend);
-
-app.delete("/users/add/:id", checkAuth, UserController.removeFriend);
-
-app.get("/users/me", checkAuth, UserController.getMe);
-
-app.get("/users/:id", checkAuth, UserController.getOneUser);
-
-app.get("/users/search/:name", checkAuth, UserController.searchUserByName);
-
-app.get("/leaderboard", checkAuth, UserController.getUsers);
-
-app.patch("/users/me", checkAuth, UserController.updateMe);
-
-app.patch("/users/me/stat", checkAuth, UserController.updateStat);
-
-app.patch("/users/me/pass", checkAuth, UserController.updatePass);
+app.use("/", userRoutes);
 
 //Api for Games
 

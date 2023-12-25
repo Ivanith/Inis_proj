@@ -121,34 +121,34 @@ export const updateMe = async (req: Request, res: Response) => {
 
 //самое главное не доделанное
 
-export const updateStat = async (req: Request, res: Response) => {
-  try {
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      req.userId,
-      {
-        totalGames: req.body.totalGames,
-        wins: req.body.wins,
-        winrate: req.body.winrate,
-        rating: req.body.rating,
-      },
-      { new: true } // This option returns the updated document
-    );
+// export const updateStat = async (req: Request, res: Response) => {
+//   try {
+//     const updatedUser = await UserModel.findByIdAndUpdate(
+//       req.userId,
+//       {
+//         totalGames: req.body.totalGames,
+//         wins: req.body.wins,
+//         winrate: req.body.winrate,
+//         rating: req.body.rating,
+//       },
+//       { new: true } // This option returns the updated document
+//     );
 
-    if (!updatedUser) {
-      return res.status(404).json({
-        message: "user not found",
-      });
-    }
+//     if (!updatedUser) {
+//       return res.status(404).json({
+//         message: "user not found",
+//       });
+//     }
 
-    const { passwordHash, ...userData } = updatedUser;
-    res.json(userData);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      message: "update error",
-    });
-  }
-};
+//     const { passwordHash, ...userData } = updatedUser;
+//     res.json(userData);
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({
+//       message: "update error",
+//     });
+//   }
+// };
 
 export const updatePass = async (req: Request, res: Response) => {
   try {
