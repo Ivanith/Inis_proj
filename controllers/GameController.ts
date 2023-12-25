@@ -9,28 +9,23 @@ const updateStats = async (gameObj: any) => {
   try {
     for (const playerId of gameObj.players) {
       const user = await UserModel.findById(playerId);
-
       if (!user) {
         console.log(`User with ID ${playerId} not found`);
         break;
       }
-      var userGamesTotal = user.totalGames + 1;
+      let userGamesTotal = user.totalGames + 1;
       user.totalGames = userGamesTotal;
-      var userWins;
-
-      if (gameObj.winner.includes(playerId)) {
+      let userWins;
+      if (gameObj.winner.toString() === playerId.toString()) {
+        console.log("winner: " + playerId);
         userWins = (user.wins) + 1;
         user.wins = userWins;
-
         user.winrate = Math.round((userWins / userGamesTotal) * 100);
-
         user.rating = user.rating + 25;
-      } else {
-
+      } 
+      else {
         userWins = (user.wins)
-
         user.winrate = Math.round((userWins / userGamesTotal) * 100);
-
         user.rating = user.rating - 25;
       }
 

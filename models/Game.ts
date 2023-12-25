@@ -28,9 +28,8 @@ const GameSchema = new mongoose.Schema(
       required: true,
     },
     winner: {
-      type: [mongoose.Schema.Types.ObjectId],
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: [],
       required: true,
     },
   },
