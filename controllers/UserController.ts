@@ -1,15 +1,17 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import mongoose from "mongoose";
-import UserModel from "../models/User.js";
-import GameModel from "../models/Game.js";
+import mongoose, { SortOrder } from "mongoose";
+import UserModel from "../models/User";
+import GameModel from "../models/Game";
+import { Types } from 'mongoose';
+import { Request, Response } from "express";
 
-export const register = async (req, res) => {
+export const register = async (req: Request, res: Response) => {
   try {
     const password = req.body.password;
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
-    
+
     const doc = new UserModel({
       email: req.body.email,
       userName: req.body.userName,
@@ -28,9 +30,9 @@ export const register = async (req, res) => {
       }
     );
 
-    const { passwordHash, ...userData } = user._doc;
+    const { passwordHash, ...userData } = user;
 
-    
+
     res.json({
       ...userData,
       token,
@@ -43,19 +45,19 @@ export const register = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
+export const login = async (req: Request, res: Response) => {
   try {
     const user = await UserModel.findOne({ email: req.body.email });
 
     if (!user) {
-      return req.status(404).json({
+      return res.status(404).json({
         message: "User not found",
       });
     }
 
     const isValidPass = await bcrypt.compare(
       req.body.password,
-      user._doc.passwordHash
+      user.passwordHash
     );
 
     if (!isValidPass) {
@@ -74,7 +76,7 @@ export const login = async (req, res) => {
       }
     );
 
-    const { passwordHash, ...userData } = user._doc;
+    const { passwordHash, ...userData } = user;
 
     res.json({
       ...userData,
@@ -88,7 +90,7 @@ export const login = async (req, res) => {
   }
 };
 
-export const updateMe = async (req, res) => {
+export const updateMe = async (req: Request, res: Response) => {
   try {
     const updatedUser = await UserModel.findByIdAndUpdate(
       req.userId,
@@ -107,7 +109,7 @@ export const updateMe = async (req, res) => {
       });
     }
 
-    const { passwordHash, ...userData } = updatedUser._doc;
+    const { passwordHash, ...userData } = updatedUser;
     res.json(userData);
   } catch (err) {
     console.log(err);
@@ -119,36 +121,36 @@ export const updateMe = async (req, res) => {
 
 //самое главное не доделанное
 
-export const updateStat = async (req, res) => {
-  try {
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      req.userId,
-      {
-        totalGames: req.body.totalGames,
-        wins: req.body.wins,
-        winrate: req.body.winrate,
-        rating: req.body.rating,
-      },
-      { new: true } // This option returns the updated document
-    );
+// export const updateStat = async (req: Request, res: Response) => {
+//   try {
+//     const updatedUser = await UserModel.findByIdAndUpdate(
+//       req.userId,
+//       {
+//         totalGames: req.body.totalGames,
+//         wins: req.body.wins,
+//         winrate: req.body.winrate,
+//         rating: req.body.rating,
+//       },
+//       { new: true } // This option returns the updated document
+//     );
 
-    if (!updatedUser) {
-      return res.status(404).json({
-        message: "user not found",
-      });
-    }
+//     if (!updatedUser) {
+//       return res.status(404).json({
+//         message: "user not found",
+//       });
+//     }
 
-    const { passwordHash, ...userData } = updatedUser._doc;
-    res.json(userData);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      message: "update error",
-    });
-  }
-};
+//     const { passwordHash, ...userData } = updatedUser;
+//     res.json(userData);
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({
+//       message: "update error",
+//     });
+//   }
+// };
 
-export const updatePass = async (req, res) => {
+export const updatePass = async (req: Request, res: Response) => {
   try {
     const user = await UserModel.findById(req.userId);
 
@@ -178,7 +180,7 @@ export const updatePass = async (req, res) => {
         });
       }
 
-      const { passwordHash, ...userData } = updatedUser._doc;
+      const { passwordHash, ...userData } = updatedUser;
       return res.status(200).json({
         message: "Password changed successfully",
       });
@@ -195,16 +197,19 @@ export const updatePass = async (req, res) => {
   }
 };
 
-export const addFriend = async (req, res) => {
+export const addFriend = async (req: Request, res: Response) => {
   try {
     const friendId = req.params.id;
     const userId = req.userId;
 
     const user = await UserModel.findById(userId);
-    if (user.friends.includes(friendId)) {
+    if (!user) {
+      return;
+    }
+    if (user.friends.includes(new Types.ObjectId(friendId))) {
       return res.status(200).json({ message: "You are already friends!" });
     }
-    user.friends.push(friendId);
+    user.friends.push(new Types.ObjectId(friendId));
     await user.save();
 
     res.status(200).json({ message: "Friend added successfully" });
@@ -214,13 +219,16 @@ export const addFriend = async (req, res) => {
   }
 };
 
-export const removeFriend = async (req, res) => {
+export const removeFriend = async (req: Request, res: Response) => {
   try {
     const friendId = req.params.id;
     const userId = req.userId;
 
     const user = await UserModel.findById(userId);
-    if (!user.friends.includes(friendId)) {
+    if (!user) {
+      return;
+    }
+    if (!user.friends.includes(new Types.ObjectId(friendId))) {
       return res.status(400).json({ message: "You are not friends!" });
     }
 
@@ -235,7 +243,7 @@ export const removeFriend = async (req, res) => {
   }
 };
 
-export const getMe = async (req, res) => {
+export const getMe = async (req: Request, res: Response) => {
   try {
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const default_lim = 10;
@@ -258,7 +266,7 @@ export const getMe = async (req, res) => {
       .limit(default_lim)
       .exec();
 
-    const { passwordHash, ...userData } = user._doc;
+    const { passwordHash, ...userData } = user.toObject();
 
     res.json({ user: userData, games });
   } catch (err) {
@@ -269,12 +277,12 @@ export const getMe = async (req, res) => {
   }
 };
 
-export const getOneUser = async (req, res) => {
+export const getOneUser = async (req: Request, res: Response) => {
   const skip = req.query.skip ? Number(req.query.skip) : 0;
   const default_lim = 10;
 
   try {
-    //user by id part
+    // User by id part
     const userId = req.params.id;
 
     const excludeFields = [
@@ -290,28 +298,31 @@ export const getOneUser = async (req, res) => {
     const user = await UserModel.findById({ _id: userId }).select(
       excludeFields.map((field) => "-" + field).join(" ")
     );
-    //games from user part
 
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Games from user part
     const games = await GameModel.find({ players: userId })
       .skip(skip)
       .limit(default_lim)
       .exec();
 
-    const { passwordHash, ...userData } = user._doc;
-
+    const { passwordHash, ...userData } = user.toObject();
     res.json({ user: userData, games });
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "permission denied",
+      message: "Permission denied",
     });
   }
 };
 
-export const searchUserByName = async (req, res) => {
+export const searchUserByName = async (req: Request, res: Response) => {
   const name = new RegExp(req.params?.name, "i");
 
-  if (name !== "") {
+  if (req.params.name !== "") {
     try {
       const excludeFields = [
         "passwordHash",
@@ -341,11 +352,9 @@ export const searchUserByName = async (req, res) => {
   }
 };
 
-export const getUsers = async (req, res) => {
+export const getUsers = async (req: Request, res: Response) => {
   try {
-    //sort by rating part
-    const sortOptions = {};
-    sortOptions.rating = -1;
+    const sortOptions: { [key: string]: SortOrder } = { rating: -1 };
 
     const excludeFields = [
       "passwordHash",
@@ -365,11 +374,15 @@ export const getUsers = async (req, res) => {
       .select(excludeFields.map((field) => "-" + field).join(" "))
       .sort(sortOptions)
       .exec();
+
+    console.log("Sorted Users:", users); 
+
     res.json(users);
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "users recieve error",
+      message: "users receive error",
     });
   }
 };
+

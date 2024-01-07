@@ -22,27 +22,35 @@ const UserSchema = new mongoose.Schema(
     },
     avatarUrl: {
       type: String,
+      default: ""
     },
     preferedColor: {
       type: String,
+      default: "blue"
     },
     units: {
       type: String,
+      default: ""
     },
     preferences: {
       type: String,
+      default: ""
     },
     totalGames: {
       type: Number,
+      default: 0,
     },
     wins: {
       type: Number,
+      default: 0,
     },
     winrate: {
       type: Number,
+      default: 0,
     },
     rating: {
       type: Number,
+      default: 100,
     },
   },
   {
