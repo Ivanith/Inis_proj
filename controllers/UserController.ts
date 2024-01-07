@@ -354,7 +354,6 @@ export const searchUserByName = async (req: Request, res: Response) => {
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
-    //sort by rating part
     const sortOptions: { [key: string]: SortOrder } = { rating: -1 };
 
     const excludeFields = [
@@ -375,11 +374,15 @@ export const getUsers = async (req: Request, res: Response) => {
       .select(excludeFields.map((field) => "-" + field).join(" "))
       .sort(sortOptions)
       .exec();
+
+    console.log("Sorted Users:", users); 
+
     res.json(users);
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "users recieve error",
+      message: "users receive error",
     });
   }
 };
+

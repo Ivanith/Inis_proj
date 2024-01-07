@@ -22,15 +22,19 @@ const UserSchema = new mongoose.Schema(
     },
     avatarUrl: {
       type: String,
+      default: ""
     },
     preferedColor: {
       type: String,
+      default: "blue"
     },
     units: {
       type: String,
+      default: ""
     },
     preferences: {
       type: String,
+      default: ""
     },
     totalGames: {
       type: Number,
