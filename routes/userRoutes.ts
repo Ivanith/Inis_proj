@@ -26,11 +26,11 @@ router.delete("/users/add/:id", checkAuth, UserController.removeFriend);
 
 router.get("/users/me", checkAuth, UserController.getMe);
 
-router.get("/users/:id", checkAuth, UserController.getOneUser);
+router.get("/users/:id", UserController.getOneUser);
 
-router.get("/users/search/:name", checkAuth, UserController.searchUserByName);
+router.get("/users/search/:name", UserController.searchUserByName);
 
-router.get("/leaderboard", checkAuth, UserController.getUsers);
+router.get("/leaderboard", UserController.getUsers);
 
 router.patch("/users/me", checkAuth, UserController.updateMe);
 

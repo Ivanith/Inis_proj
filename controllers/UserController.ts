@@ -119,37 +119,6 @@ export const updateMe = async (req: Request, res: Response) => {
   }
 };
 
-//самое главное не доделанное
-
-// export const updateStat = async (req: Request, res: Response) => {
-//   try {
-//     const updatedUser = await UserModel.findByIdAndUpdate(
-//       req.userId,
-//       {
-//         totalGames: req.body.totalGames,
-//         wins: req.body.wins,
-//         winrate: req.body.winrate,
-//         rating: req.body.rating,
-//       },
-//       { new: true } // This option returns the updated document
-//     );
-
-//     if (!updatedUser) {
-//       return res.status(404).json({
-//         message: "user not found",
-//       });
-//     }
-
-//     const { passwordHash, ...userData } = updatedUser;
-//     res.json(userData);
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).json({
-//       message: "update error",
-//     });
-//   }
-// };
-
 export const updatePass = async (req: Request, res: Response) => {
   try {
     const user = await UserModel.findById(req.userId);
@@ -206,6 +175,7 @@ export const addFriend = async (req: Request, res: Response) => {
     if (!user) {
       return;
     }
+    if (userId == friendId) { return res.status(200).json({ message: "You cant add yourself!" }); }
     if (user.friends.includes(new Types.ObjectId(friendId))) {
       return res.status(200).json({ message: "You are already friends!" });
     }
@@ -375,7 +345,7 @@ export const getUsers = async (req: Request, res: Response) => {
       .sort(sortOptions)
       .exec();
 
-    console.log("Sorted Users:", users); 
+    console.log("Sorted Users:", users);
 
     res.json(users);
   } catch (err) {

@@ -22,11 +22,14 @@ const updateStats = async (gameObj: any) => {
         user.wins = userWins;
         user.winrate = Math.round((userWins / userGamesTotal) * 100);
         user.rating = user.rating + 25;
-      } 
+      }
       else {
         userWins = (user.wins)
         user.winrate = Math.round((userWins / userGamesTotal) * 100);
-        user.rating = user.rating - 25;
+        if (user.rating > 25) {
+          user.rating = user.rating - 25;
+        }
+        else { user.rating = 0 }
       }
 
       await user.save();
