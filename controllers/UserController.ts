@@ -272,7 +272,7 @@ export const updateBanStatus = async (req: Request, res: Response) => {
     const updatedUser = await UserModel.findByIdAndUpdate(
       { _id: updUserId },
       {
-        banStatus: req.body.banStatus,
+        banStatus: true,
       },
       { new: true }
     );
