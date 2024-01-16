@@ -34,9 +34,9 @@ router.get("/leaderboard", UserController.getUsers);
 
 router.patch("/users/me", checkAuth, UserController.updateMe);
 
-// router.patch("/users/me/stat", checkAuth, UserController.updateStat);
-
 router.patch("/users/me/pass", checkAuth, UserController.updatePass);
+
+router.patch("/users/ban/:id", checkAuth, UserController.updateBanStatus);
 
 
 

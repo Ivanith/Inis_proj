@@ -54,34 +54,35 @@ export const login = async (req: Request, res: Response) => {
         message: "User not found",
       });
     }
+    if (user.banStatus != true) {
+      const isValidPass = await bcrypt.compare(
+        req.body.password,
+        user.passwordHash
+      );
 
-    const isValidPass = await bcrypt.compare(
-      req.body.password,
-      user.passwordHash
-    );
-
-    if (!isValidPass) {
-      return res.status(400).json({
-        message: "Login or pass error",
-      });
-    }
-
-    const token = jwt.sign(
-      {
-        _id: user._id,
-      },
-      "secret123",
-      {
-        expiresIn: "20d",
+      if (!isValidPass) {
+        return res.status(400).json({
+          message: "Login or pass error",
+        });
       }
-    );
 
-    const { passwordHash, ...userData } = user;
+      const token = jwt.sign(
+        {
+          _id: user._id,
+        },
+        "secret123",
+        {
+          expiresIn: "20d",
+        }
+      );
 
-    res.json({
-      ...userData,
-      token,
-    });
+      const { passwordHash, ...userData } = user;
+
+      res.json({
+        ...userData,
+        token,
+      });
+    } else { res.status(200).json({ message: "You have been banned", }); }
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -246,6 +247,53 @@ export const getMe = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updateBanStatus = async (req: Request, res: Response) => {
+  try {
+    const updUserId = req.params.id;
+    const excludeFields = ["passwordHash", "__v", "createdAt", "updatedAt"];
+
+    const user = await UserModel.findById(req.userId).select(
+      excludeFields.map((field) => "-" + field).join(" ")
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (user.role !== "Admin") {
+      return res.status(403).json({
+        message: "You are not an admin",
+      });
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      { _id: updUserId },
+      {
+        banStatus: req.body.banStatus,
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const { passwordHash, ...userData } = updatedUser;
+    res.status(200).json({ message: "User banned", userData });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
 
 export const getOneUser = async (req: Request, res: Response) => {
   const skip = req.query.skip ? Number(req.query.skip) : 0;
