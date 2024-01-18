@@ -22,6 +22,8 @@ router.post(
 
 router.post("/users/add/:id", checkAuth, UserController.addFriend);
 
+router.post("/users/takeAdmin", checkAuth, UserController.addAdmin);
+
 router.delete("/users/add/:id", checkAuth, UserController.removeFriend);
 
 router.get("/users/me", checkAuth, UserController.getMe);
@@ -37,6 +39,10 @@ router.patch("/users/me", checkAuth, UserController.updateMe);
 router.patch("/users/me/pass", checkAuth, UserController.updatePass);
 
 router.patch("/users/ban/:id", checkAuth, UserController.updateBanStatus);
+
+router.patch("/users/giveAdmin/:id", checkAuth, UserController.updateUserRole);
+
+
 
 
 

@@ -93,9 +93,34 @@ export const login = async (req: Request, res: Response) => {
 
 export const updateMe = async (req: Request, res: Response) => {
   try {
+
+    if (
+      req.body.userName &&
+      req.body.userName.length < 5
+    ) {
+      return res.status(400).json({
+        message: "User name must be at least 5 characters long.",
+      });
+    }
+
+
+    if (req.body.userName) {
+      const existingUser = await UserModel.findOne({
+        userName: req.body.userName,
+        _id: { $ne: req.userId },
+      });
+
+      if (existingUser) {
+        return res.status(400).json({
+          message: "User name is already taken.",
+        });
+      }
+    }
+
     const updatedUser = await UserModel.findByIdAndUpdate(
       req.userId,
       {
+        userName: req.body.userName,
         avatarUrl: req.body.avatarUrl,
         preferedColor: req.body.preferedColor,
         units: req.body.units,
@@ -106,19 +131,20 @@ export const updateMe = async (req: Request, res: Response) => {
 
     if (!updatedUser) {
       return res.status(404).json({
-        message: "user not found",
+        message: "User not found",
       });
     }
 
     const { passwordHash, ...userData } = updatedUser;
     res.json(userData);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({
-      message: "update error",
+      message: "Update error",
     });
   }
 };
+
 
 export const updatePass = async (req: Request, res: Response) => {
   try {
@@ -174,19 +200,36 @@ export const addFriend = async (req: Request, res: Response) => {
 
     const user = await UserModel.findById(userId);
     if (!user) {
-      return;
+      return res.status(404).json({ message: 'User not found' });
     }
-    if (userId == friendId) { return res.status(200).json({ message: "You cant add yourself!" }); }
-    if (user.friends.includes(new Types.ObjectId(friendId))) {
-      return res.status(200).json({ message: "You are already friends!" });
+
+    if (userId === friendId) {
+      return res.status(400).json({ message: "You can't add yourself!" });
     }
-    user.friends.push(new Types.ObjectId(friendId));
+
+    if (user.friends.some((friend) => friend.id?.toString() === friendId)) {
+      return res.status(400).json({ message: 'You are already friends!' });
+    }
+
+    const friend = await UserModel.findById(friendId);
+
+    if (!friend) {
+      return res.status(404).json({ message: 'Friend not found' });
+    }
+
+    const friendInfo = friend.toObject();
+
+    user.friends.push({
+      id: friendInfo._id,
+      avatarUrl: friendInfo.avatarUrl || '',
+      userName: friendInfo.userName || '',
+    });
     await user.save();
 
-    res.status(200).json({ message: "Friend added successfully" });
+    res.status(200).json({ message: 'Friend added successfully', friend: friendInfo.userName });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Failed to add friend", error });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to add friend', error });
   }
 };
 
@@ -197,20 +240,24 @@ export const removeFriend = async (req: Request, res: Response) => {
 
     const user = await UserModel.findById(userId);
     if (!user) {
-      return;
-    }
-    if (!user.friends.includes(new Types.ObjectId(friendId))) {
-      return res.status(400).json({ message: "You are not friends!" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    const friendObjectId = new mongoose.Types.ObjectId(friendId);
-    user.friends = user.friends.filter((id) => !id.equals(friendObjectId));
+    const friendIndex = user.friends.findIndex(
+      (friend) => friend.id?.toString() === friendId
+    );
+
+    if (friendIndex === -1) {
+      return res.status(400).json({ message: 'You are not friends!' });
+    }
+
+    user.friends.splice(friendIndex, 1);
     await user.save();
 
-    return res.status(200).json({ message: "friend removed successfully" });
+    return res.status(200).json({ message: 'Friend removed successfully' });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Failed to remove friend", error });
+    console.error(error);
+    return res.status(500).json({ message: 'Failed to remove friend', error });
   }
 };
 
@@ -294,6 +341,99 @@ export const updateBanStatus = async (req: Request, res: Response) => {
   }
 };
 
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const updUserId = req.params.id;
+    const excludeFields = ["passwordHash", "__v", "createdAt", "updatedAt"];
+
+    const user = await UserModel.findById(req.userId).select(
+      excludeFields.map((field) => "-" + field).join(" ")
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (user.role !== "Admin") {
+      return res.status(403).json({
+        message: "You are not an admin",
+      });
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      { _id: updUserId },
+      {
+        role: "Admin",
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const { passwordHash, ...userData } = updatedUser;
+    res.status(200).json({ message: "User now Admin", userData });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const addAdmin = async (req: Request, res: Response) => {
+  try {
+
+    const excludeFields = ["passwordHash", "__v", "createdAt", "updatedAt"];
+
+    const user = await UserModel.findById(req.userId).select(
+      excludeFields.map((field) => "-" + field).join(" ")
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const code = req.body.AdminCode
+    if (code !== "123132") {
+      return res.status(403).json({
+        message: "You are not worthy one!",
+      });
+    }
+
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      { _id: req.userId },
+      {
+        role: "Admin",
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const { passwordHash, ...userData } = updatedUser;
+    res.status(200).json({ message: "User now Admin", userData });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
 
 export const getOneUser = async (req: Request, res: Response) => {
   const skip = req.query.skip ? Number(req.query.skip) : 0;
