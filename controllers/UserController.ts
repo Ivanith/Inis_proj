@@ -193,6 +193,7 @@ export const updatePass = async (req: Request, res: Response) => {
   }
 };
 
+
 export const addFriend = async (req: Request, res: Response) => {
   try {
     const friendId = req.params.id;
@@ -200,36 +201,19 @@ export const addFriend = async (req: Request, res: Response) => {
 
     const user = await UserModel.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return;
     }
-
-    if (userId === friendId) {
-      return res.status(400).json({ message: "You can't add yourself!" });
+    if (userId == friendId) { return res.status(200).json({ message: "You cant add yourself!" }); }
+    if (user.friends.includes(new Types.ObjectId(friendId))) {
+      return res.status(200).json({ message: "You are already friends!" });
     }
-
-    if (user.friends.some((friend) => friend.id?.toString() === friendId)) {
-      return res.status(400).json({ message: 'You are already friends!' });
-    }
-
-    const friend = await UserModel.findById(friendId);
-
-    if (!friend) {
-      return res.status(404).json({ message: 'Friend not found' });
-    }
-
-    const friendInfo = friend.toObject();
-
-    user.friends.push({
-      id: friendInfo._id,
-      avatarUrl: friendInfo.avatarUrl || '',
-      userName: friendInfo.userName || '',
-    });
+    user.friends.push(new Types.ObjectId(friendId));
     await user.save();
 
-    res.status(200).json({ message: 'Friend added successfully', friend: friendInfo.userName });
+    res.status(200).json({ message: "Friend added successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to add friend', error });
+    console.log(error);
+    res.status(500).json({ message: "Failed to add friend", error });
   }
 };
 
@@ -240,24 +224,20 @@ export const removeFriend = async (req: Request, res: Response) => {
 
     const user = await UserModel.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return;
+    }
+    if (!user.friends.includes(new Types.ObjectId(friendId))) {
+      return res.status(400).json({ message: "You are not friends!" });
     }
 
-    const friendIndex = user.friends.findIndex(
-      (friend) => friend.id?.toString() === friendId
-    );
-
-    if (friendIndex === -1) {
-      return res.status(400).json({ message: 'You are not friends!' });
-    }
-
-    user.friends.splice(friendIndex, 1);
+    const friendObjectId = new mongoose.Types.ObjectId(friendId);
+    user.friends = user.friends.filter((id) => !id.equals(friendObjectId));
     await user.save();
 
-    return res.status(200).json({ message: 'Friend removed successfully' });
+    return res.status(200).json({ message: "friend removed successfully" });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Failed to remove friend', error });
+    console.log(error);
+    return res.status(500).json({ message: "Failed to remove friend", error });
   }
 };
 
@@ -268,15 +248,28 @@ export const getMe = async (req: Request, res: Response) => {
 
     const excludeFields = ["passwordHash", "__v", "createdAt", "updatedAt"];
 
-    const user = await UserModel.findById(req.userId).select(
-      excludeFields.map((field) => "-" + field).join(" ")
-    );
+    const user = await UserModel.findById(req.userId)
+      .select(excludeFields.map((field) => "-" + field).join(" "))
+      .exec();
 
     if (!user) {
       return res.status(404).json({
         message: "user not found",
       });
     }
+
+    // Fetch details of friends using their IDs
+    const friendDetailsPromises = user.friends.map(async (friendId: mongoose.Types.ObjectId) => {
+      const friendDetails = await UserModel.findById(friendId).select('userName avatarUrl').exec();
+      return {
+        id: friendId,
+        userName: friendDetails?.userName || 'Unknown',
+        avatarUrl: friendDetails?.avatarUrl || '',
+      };
+    });
+
+    // Resolve all promises
+    const friendDetails = await Promise.all(friendDetailsPromises);
 
     // games part
     const games = await GameModel.find({ players: req.userId })
@@ -286,7 +279,7 @@ export const getMe = async (req: Request, res: Response) => {
 
     const { passwordHash, ...userData } = user.toObject();
 
-    res.json({ user: userData, games });
+    res.json({ user: { ...userData, friends: friendDetails }, games });
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -294,6 +287,8 @@ export const getMe = async (req: Request, res: Response) => {
     });
   }
 };
+
+
 
 export const updateBanStatus = async (req: Request, res: Response) => {
   try {

@@ -21,16 +21,8 @@ const UserSchema = new mongoose.Schema(
       required: true,
     },
     friends: {
-      type: [
-        {
-          id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-          },
-          avatarUrl: String,
-          userName: String,
-        },
-      ],
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: 'User',
       default: [],
     },
     avatarUrl: {
