@@ -13,14 +13,19 @@ export default function handleSocketConnections(io: Server) {
     //login part
     socket.auth = false;
     socket.on("authenticate", async (token) => {
-      const { _id } = jwt.verify(token, "secret123") as JwtPayload;
-      const user = await UserModel.findById(_id).exec();
-      if (!user) {
-        socket.emit("error", { message: "No user found" });
-        return;
+      try {
+        const { _id } = jwt.verify(token, "secret123") as JwtPayload;
+        const user = await UserModel.findById(_id).exec();
+        if (!user) {
+          socket.emit("error", { message: "No user found" });
+          return;
+        }
+        socket.auth = true;
+        socket.user = user;
       }
-      socket.auth = true;
-      socket.user = user;
+      catch (err) {
+        console.log(err);
+      }
     });
 
     handleLobbyEvents(io, socket);
