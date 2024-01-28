@@ -83,11 +83,11 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         }
         const playerInfo = {
             socketId: socket.id,
-            userId: socket.user.id,
-            userName: socket.user.userName,
-            rating: socket.user.rating,
-            color: socket.user.preferedColor,
-            winrate: socket.user.winrate,
+            userId: socket.user.id || socket.id,
+            userName: socket.user.userName || "unloggedUser",
+            rating: socket.user.rating || 100,
+            color: socket.user.preferedColor || "red",
+            winrate: socket.user.winrate || 0,
             isReady: false,
         };
         lobbies[lobbyId].players.push(playerInfo);

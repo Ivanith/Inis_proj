@@ -18,8 +18,14 @@ export default function handleSocketConnections(io: Server) {
         const user = await UserModel.findById(_id).exec();
         if (!user) {
           socket.emit("error", { message: "No user found" });
+
+          return;
+        } else if (user.banStatus === true) {
+          socket.emit("error", { message: "You are banned" });
+
           return;
         }
+
         socket.auth = true;
         socket.user = user;
       }
