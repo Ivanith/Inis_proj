@@ -8,7 +8,7 @@ export function getLobbyById(lobbies: ILobbies, targetLobbyId: string): ILobby {
 }
 export function updateLobby(io: Server, lobbies: ILobbies, lobbyId: string, socket: ICustomSocket) {
     const lobby = getLobbyById(lobbies, lobbyId);
-    io.to(socket.lobbyId!).emit("lobby-updated", lobby);
+    io.to(lobbyId).emit("lobby-updated", lobby);
 }
 export function getLobbyList(lobbies: ILobbies): ILobbyDTO[] {
     return Object.entries(lobbies).map(([lobby_Id, lobby]) =>

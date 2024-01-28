@@ -83,11 +83,11 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         }
         const playerInfo = {
             socketId: socket.id,
-            userId: socket.user.id || socket.id,
-            userName: socket.user.userName || "unloggedUser",
-            rating: socket.user.rating || 100,
-            color: socket.user.preferedColor || "red",
-            winrate: socket.user.winrate || 0,
+            userId: socket.user?.id || socket.id,
+            userName: socket.user?.userName || "unloggedUser",
+            rating: socket.user?.rating || 100,
+            color: socket.user?.preferedColor || "red",
+            winrate: socket.user?.winrate || 0,
             isReady: false,
         };
         lobbies[lobbyId].players.push(playerInfo);
@@ -95,6 +95,7 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         socket.lobbyId = lobbyId;
         socket.emit("lobby-joined", true);
         updateLobbyList(io, getLobbyList(lobbies));
+        updateLobby(io, lobbies, lobbyId, socket);
     });
 
     socket.on("send-message", ({ message }) => {
@@ -140,6 +141,8 @@ export function handleLobbyEvents(io: Server, socket: ICustomSocket) {
         lobbies[socket.lobbyId].isRanked = lobbySetting.isRanked;
         lobbies[socket.lobbyId].gameSpeed = lobbySetting.gameSpeed;
         lobbies[socket.lobbyId].maxPlayers = lobbySetting.maxPlayers;
+        updateLobbyList(io, getLobbyList(lobbies));
+        updateLobby(io, lobbies, socket.lobbyId, socket);
     })
 
     socket.on("is-ready", () => {
